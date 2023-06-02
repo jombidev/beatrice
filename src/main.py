@@ -18,6 +18,7 @@ if __name__ == '__main__':
     running = True
     g.set_screen(MainScreen())
     while running:
+        g.screen.fill('black')
         for ev in g.poll():
             if ev.type == pygame.QUIT:
                 running = False
@@ -26,11 +27,10 @@ if __name__ == '__main__':
                     g.get_screen().key_typed(ev.key, ev.unicode)
                 elif ev.type == pygame.MOUSEWHEEL:
                     g.get_screen().mouse_scrolled(*pygame.mouse.get_pos(), ev.x, ev.y)
-        g.screen.fill('black')
         repeat = g.get_ticker().advance_time(get_system_time())
         for i in range(min(10, repeat)):
             Constants().add('tick', 1)
         g.update()
         g.flip()
-        g.fixFrame(240)  # vsync
+        g.fixFrame(360)  # vsync
     del g

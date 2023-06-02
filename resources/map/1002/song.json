@@ -3,5 +3,6 @@
     "composer": "Cream puff",
     "highlight": 59.8,
     "highlightDuration": 17000,
-    "bpm": 140
+    "bpm": 140,
+    "offset": 35
 }

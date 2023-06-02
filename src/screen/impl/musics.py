@@ -3,6 +3,9 @@ import os
 import time
 from types import SimpleNamespace
 
+from mutagen.mp3 import MP3
+
+from src.screen.impl.ingame import GameScreen
 from src.screen.screen import Screen
 from src.utility.drawutil import DrawUtil
 from src.utility.fontfactory import FontType
@@ -24,20 +27,23 @@ class MusicSelectScreen(Screen):
             dir = 'resources/map/' + f
             valid = True
             for ext in validPack:
-                if not os.path.exists(f'{dir}/{f}.{ext}'):
+                if not os.path.exists(f'{dir}/song.{ext}'):
                     valid = False
             if not valid:
                 continue
-            j = json.loads('\n'.join(open(f'{dir}/{f}.json', mode='r').readlines()), object_hook=lambda d: SimpleNamespace(**d))
+            j = json.loads('\n'.join(open(f'{dir}/song.json', mode='r').readlines()), object_hook=lambda d: SimpleNamespace(**d))
             self.__musicList.append({
-                'name': f'{j.name} - {j.composer}',
+                'name': j.name,
+                'composer': j.composer,
                 'bpm': j.bpm,
                 'highlight': j.highlight,
                 'duration': j.highlightDuration,
-                'image': f'{dir}/{f}.jpg',
-                'music': f'{dir}/{f}.mp3',
-                'beatmap': j
+                'image': f'{dir}/song.jpg',
+                'music': f'{dir}/song.mp3',
+                'beatmap': j,
+                'offset': j.offset
             })
+        self.__musicList.reverse()
 
     def init_screen(self):
         self.__load_music_list()
@@ -53,9 +59,7 @@ class MusicSelectScreen(Screen):
             self.__scrollAnimation = 0.0
         if self.__playing:
             thing = self.__selected['duration'] - (self.__playing and time.time_ns() // 1000000 - self.__recheck)
-            print(thing)
             if thing < 1500:
-                print(thing / 1500)
                 self.__playing.setVolume_(thing / 1500)
 
         if self.__playing and time.time_ns() // 1000000 - self.__recheck > self.__selected['duration']:
@@ -83,6 +87,8 @@ class MusicSelectScreen(Screen):
                     self.__playing = thing
                     self.__recheck = time.time_ns() // 1000000
                     SoundUtil().play(self.__playing, self.__selected['highlight'])
+        if self.__selected and DrawUtil().is_hovered(mouse_x, mouse_y, 720, 50, 450, 600):
+            self.__click_selected(720, 50, mouse_x - 720, mouse_y - 50)
 
     def mouse_scrolled(self, mouse_x: int, mouse_y: int, scroll_x: int, scroll_y: int):
         self.__scrollAnimation -= scroll_y * 10
@@ -97,8 +103,9 @@ class MusicSelectScreen(Screen):
             if DrawUtil().is_hovered(mouse_x, mouse_y, x, y + i * height, width, height) or self.__selected == self.__musicList[i]:
                 DrawUtil().draw_box(x, y + i * height, width, height, 0xff424242)
             DrawUtil().draw_box(x, y + i * height, width, 1, 0xff424242)
-            DrawUtil().draw_image(self.__musicList[i]['image'], x, y + i * height, height, height)
-            DrawUtil().draw_string(self.__musicList[i]['name'], x + height + 5, y + i * height + 5, 0xffffffff, font=FontType.NANUM, size=20)
+            DrawUtil().draw_box(x + 5, y + i * height + 5, 90, 90, 0xffffffff)
+            DrawUtil().draw_image(self.__musicList[i]['image'], x + 10, y + i * height + 10, 80, 80)
+            DrawUtil().draw_string(f'{self.__musicList[i]["composer"]} - {self.__musicList[i]["name"]}', x + height + 5, y + i * height + 5, 0xffffffff, font=FontType.NANUM, size=20)
             DrawUtil().draw_string(f'BPM: {self.__musicList[i]["bpm"]}', x + height + 5, y + i * height + 5 + 20, 0xffffffff, font=FontType.NANUM)
 
     def __draw_selected(self, x: int, y: int):
@@ -107,5 +114,14 @@ class MusicSelectScreen(Screen):
         if self.__selected:
             DrawUtil().draw_box(x, y, width, height, 0xff212121)
             DrawUtil().draw_image(self.__selected['image'], x + width / 2 - 100, y + 25, 200, 200)
-            DrawUtil().draw_centered_string(self.__selected['name'], x + width / 2, y + 250, 0xffffffff, font=FontType.NANUM, size=24)
+            DrawUtil().draw_centered_string(f'{self.__selected["composer"]} - {self.__selected["name"]}', x + width / 2, y + 250, 0xffffffff, font=FontType.NANUM, size=24)
             DrawUtil().draw_centered_string(f'BPM: {self.__selected["bpm"]}', x + width / 2, y + 265 + 15, 0xffffffff, font=FontType.NANUM)
+            DrawUtil().draw_box(x + 5, y + 300, 100, 25, 0xff646464)
+            DrawUtil().draw_string("metronome", x + 10, y + 305, 0xffffffff)
+
+    def __click_selected(self, x: int, y: int, mouse_x: int, mouse_y: int):
+        width = 450
+        height = 600
+        if DrawUtil().is_hovered(mouse_x, mouse_y, 5, 300, 100, 25):
+            SoundUtil().stop(self.__playing)
+            self.game.set_screen(GameScreen(self.__selected, MP3(self.__selected['music']).info.length))
