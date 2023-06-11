@@ -4,6 +4,7 @@ class Constants:
             cls._instance = super().__new__(cls)
         return cls._instance
     __dic = {}
+
     def set(self, name: str, value):
         self.__dic[name] = value
 
@@ -13,4 +14,6 @@ class Constants:
         self.__dic[name] += value
 
     def get(self, name: str):
+        if name not in self.__dic:
+            raise ModuleNotFoundError(f'{name} not found on constants.')
         return self.__dic.get(name)

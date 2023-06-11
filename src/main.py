@@ -13,8 +13,10 @@ os.environ["MTL_HUD_ENABLED"] = "1"
 prevTime = 0
 
 if __name__ == '__main__':
+    pygame.mixer.pre_init(frequency=44100, size=-16, channels=2, buffer=64)
     g = Game('testing', 1280, 720)
     Constants().set('game', g)
+
     running = True
     g.set_screen(MainScreen())
     while running:

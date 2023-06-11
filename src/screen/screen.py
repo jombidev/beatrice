@@ -1,4 +1,4 @@
-from src.screen.guiable import Drawable, Clickable, Typeable
+from src.screen.guiactions import Drawable, Clickable, Typeable
 from src.static.constants import Constants
 
 
