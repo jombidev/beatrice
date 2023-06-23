@@ -26,6 +26,13 @@ class DrawUtil:
         f2 = color & 255
         pygame.draw.rect(Constants().get('game').screen, color=(f, f1, f2, f3), rect=pygame.Rect(x, y, width, height))
 
+    def draw_line(self, x1: float, y1: float, x2: float, y2: float, color: int):
+        f3 = color >> 24 & 255
+        f = color >> 16 & 255
+        f1 = color >> 8 & 255
+        f2 = color & 255
+        pygame.draw.line(Constants().get('game').screen, color=(f, f1, f2, f3), start_pos=(x1, y1), end_pos=(x2, y2))
+
     def draw_string(self, text: str, x: float, y: float, color: int, font: FontType = FontType.ARIAL, size: int = 16):
         f3 = color >> 24 & 255
         f = color >> 16 & 255

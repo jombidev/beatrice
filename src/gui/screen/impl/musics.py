@@ -1,13 +1,13 @@
 import json
 import os
-import time
 from types import SimpleNamespace
 
-from src.screen.button import Button
-from src.screen.screen import Screen
+from src.gui.screen.util.button import Button
+from src.gui.screen.screen import Screen
 from src.utility.drawutil import DrawUtil
 from src.utility.fontfactory import FontType
 from src.utility.soundutil import SoundUtil
+from src.utility.timestamp import get_system_time
 
 
 class MusicSelectScreen(Screen):
@@ -22,10 +22,9 @@ class MusicSelectScreen(Screen):
         super().__init__()
         self.parent = parent
 
-    __buttons = []
-
     def __back(self):
         self.game.set_screen(self.parent)
+        SoundUtil().stop()
 
     def __load_music_list(self):
         self.__musicList.clear()
@@ -34,58 +33,56 @@ class MusicSelectScreen(Screen):
             dir = 'resources/map/' + f
             valid = True
             for ext in validPack:
-                if not os.path.exists(f'{dir}/song.{ext}'):
+                if not os.path.exists(f'{dir}/{f}.{ext}'):
                     valid = False
             if not valid:
                 continue
-            j = json.loads('\n'.join(open(f'{dir}/song.json', mode='r').readlines()), object_hook=lambda d: SimpleNamespace(**d))
+            j = json.loads('\n'.join(open(f'{dir}/{f}.json', mode='r').readlines()), object_hook=lambda d: SimpleNamespace(**d))
             self.__musicList.append({
                 'name': j.name,
                 'composer': j.composer,
                 'bpm': j.bpm,
                 'highlight': j.highlight,
                 'duration': j.highlightDuration,
-                'image': f'{dir}/song.jpg',
-                'music': f'{dir}/song.mp3',
-                'beatmap': j,
-                'offset': j.offset
+                'image': f'{dir}/{f}.jpg',
+                'music': f'{dir}/{f}.mp3',
+                'id': f
             })
         self.__musicList.reverse()
 
     def init_screen(self):
         self.__load_music_list()
-        self.__buttons.append(Button("Back", 10, 10, False, self.__back, size=18))
+        self._Screen__buttons.clear()
+        self._Screen__buttons.append(Button("Back", 10, 10, None, None, False, self.__back, size=18))
 
     def __max_scroll(self) -> float:
         return max(0.0, len(self.__musicList) * 100 - 720 + 50)
 
     def draw_screen(self, mouse_x: int, mouse_y: int, partial_ticks: float):
-        for b in self.__buttons:
-            b.draw_screen(mouse_x, mouse_y, partial_ticks)
+        super().draw_screen(mouse_x, mouse_y, partial_ticks)
         self.__finalScroll += self.__scrollAnimation / 10
 
         self.__scrollAnimation -= self.__scrollAnimation / 10
         if -0.01 < self.__scrollAnimation < 0.01 and self.__scrollAnimation != 0.0:
             self.__scrollAnimation = 0.0
         if self.__selected:
-            thing = self.__selected['duration'] - (time.time_ns() // 1000000 - self.__recheck)
+            thing = self.__selected['duration'] - (get_system_time() - self.__recheck)
             if thing < 1500 and self.__playing:
                 SoundUtil().stop(1500)
                 self.__playing = None
                 # self.__playing.setVolume_(thing / 1500)
 
-        if self.__selected and time.time_ns() // 1000000 - self.__recheck > self.__selected['duration']:
+        if self.__selected and get_system_time() - self.__recheck > self.__selected['duration']:
             self.__playing = self.__selected['music']
             SoundUtil().play(self.__playing, self.__selected['highlight'])
-            self.__recheck = time.time_ns() // 1000000
+            self.__recheck = get_system_time()
 
         self.__draw_list(80, 30, -self.__finalScroll, mouse_x, mouse_y)
         self.__draw_selected(720, 50)
         self.__finalScroll = max(0.0, min(self.__max_scroll(), self.__finalScroll))
 
     def mouse_clicked(self, mouse_x: int, mouse_y: int, mouse_button: int):
-        for b in self.__buttons:
-            b.mouse_clicked(mouse_x, mouse_y, mouse_button)
+        super().mouse_clicked(mouse_x, mouse_y, mouse_button)
         x = 80
         y = 30 - self.__finalScroll
         width = 600
@@ -100,7 +97,7 @@ class MusicSelectScreen(Screen):
 
                 if self.__selected:
                     self.__playing = self.__selected['music']
-                    self.__recheck = time.time_ns() // 1000000
+                    self.__recheck = get_system_time()
                     SoundUtil().play(self.__playing, self.__selected['highlight'])
         if self.__selected and DrawUtil().is_hovered(mouse_x, mouse_y, 720, 50, 450, 600):
             self.__click_selected(720, 50, mouse_x - 720, mouse_y - 50)
@@ -135,8 +132,10 @@ class MusicSelectScreen(Screen):
             DrawUtil().draw_string("metronome", x + 10, y + 305, 0xffffffff)
 
     def __click_selected(self, x: int, y: int, mouse_x: int, mouse_y: int):
-        width = 450
-        height = 600
-        # if DrawUtil().is_hovered(mouse_x, mouse_y, 5, 300, 100, 25):
-        #     SoundUtil().stop()
+        # width = 450
+        # height = 600
+        if DrawUtil().is_hovered(mouse_x, mouse_y, 5, 300, 100, 25):
+            SoundUtil().stop()
+            self.game.start(self.__selected['id'])
+            self.game.clear_screen()
             # self.game.set_screen(GameScreen(self.__selected, MP3(self.__selected['music']).info.length))

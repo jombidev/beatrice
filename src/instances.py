@@ -1,13 +1,10 @@
-import sys
+import os
 
 import pygame
-import time
 
-from src.screen.screen import Screen
-
-
-def get_system_time():
-    return time.time_ns() / 1000000
+from src.gui.ingame.game import GameInstance
+from src.gui.screen.impl.mainscreen import MainScreen
+from src.gui.screen.screen import Screen
 
 
 class Game:
@@ -16,10 +13,18 @@ class Game:
         self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
         self.ticker = Timer(60.0)
+        self.instance = None
         pygame.display.set_caption(title)
 
     __currentScreen = None
     __press = []
+
+    def start(self, song_id):
+        self.instance = GameInstance(song_id)
+
+    def finish(self):
+        self.instance = None
+        self.set_screen(MainScreen())
 
     def set_screen(self, screen: Screen):
         if screen is None:
@@ -40,8 +45,10 @@ class Game:
         return self.ticker
 
     def update(self):
-        if self.__currentScreen is not None:
-            x, y = pygame.mouse.get_pos()
+        x, y = pygame.mouse.get_pos()
+        if self.instance:
+            self.instance.draw_screen(x, y, self.ticker.partial_tick)
+        if self.__currentScreen:
             self.__currentScreen.draw_screen(x, y, self.ticker.partial_tick)
 
             for i, pressed in enumerate(pygame.mouse.get_pressed()):
@@ -60,7 +67,7 @@ class Game:
 
     def __del__(self):
         pygame.quit()
-        sys.exit()
+        os._exit(0)
 
 
 class Timer:

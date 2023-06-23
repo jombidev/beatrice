@@ -10,19 +10,11 @@ class SoundUtil:
         return pygame.mixer.Sound(path)
 
     def play(self, song, pos: float = 0.0):
-        # song.setCurrentTime_(pos)
-        # song.setVolume_(1.0)
         pygame.mixer.music.load(song)
         pygame.mixer.music.play(0, pos)
 
     def is_finished(self) -> bool:
         return pygame.mixer.music.get_busy()
-
-    # def pause(self, song: NSSound):
-    #     song.pause()
-    #
-    # def resume(self, song: NSSound):
-    #     song.resume()
 
     def stop(self, time: int = 0):
         if time != 0:
