@@ -2,7 +2,7 @@ import os
 
 import pygame
 
-from src.gui.ingame.game import GameInstance
+from src.gui.game import BasedInGame
 from src.gui.screen.impl.mainscreen import MainScreen
 from src.gui.screen.screen import Screen
 
@@ -19,18 +19,27 @@ class Game:
     __currentScreen = None
     __press = []
 
-    def start(self, song_id):
-        self.instance = GameInstance(song_id)
+    def start(self, game: BasedInGame):
+        self.clear_screen()
+        self.instance = game
+        game.init()
 
     def finish(self):
         self.instance = None
+
+    def main_display(self):
         self.set_screen(MainScreen())
 
     def set_screen(self, screen: Screen):
         if screen is None:
             return
         self.__currentScreen = screen
-        screen.init_screen()
+        print(type(screen))
+        try:
+            screen.init_screen()
+        except Exception as e:
+            print("exception while initializing screen:", str(e))
+            os._exit(0)
 
     def clear_screen(self):
         self.__currentScreen = None
@@ -51,12 +60,18 @@ class Game:
         if self.__currentScreen:
             self.__currentScreen.draw_screen(x, y, self.ticker.partial_tick)
 
-            for i, pressed in enumerate(pygame.mouse.get_pressed()):
-                if pressed and i not in self.__press:
-                    self.__press.append(i)
+        for i, pressed in enumerate(pygame.mouse.get_pressed()):
+            if pressed and i not in self.__press:
+                self.__press.append(i)
+                if self.instance:
+                    self.instance.mouse_clicked(x, y, i)
+                if self.__currentScreen:
                     self.__currentScreen.mouse_clicked(x, y, i)
-                if not pressed and i in self.__press:
-                    self.__press.remove(i)
+            if not pressed and i in self.__press:
+                self.__press.remove(i)
+                if self.instance:
+                    self.instance.mouse_released(x, y, i)
+                if self.__currentScreen:
                     self.__currentScreen.mouse_released(x, y, i)
 
     def flip(self):

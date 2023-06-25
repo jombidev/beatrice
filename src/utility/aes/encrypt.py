@@ -9,6 +9,6 @@ from Crypto.Util.Padding import pad
 def encrypt(msg: str) -> str:
     key = PBKDF2(SECRET_KEY, SALT, dkLen=32, count=100000)
     cipher = AES.new(key, AES.MODE_CBC, iv=IV)
-    text = cipher.encrypt(pad(msg.encode(), AES.block_size))
-
-    return base64.b64encode(text).decode('utf-8')
+    padded_data = pad(msg.encode(), AES.block_size)
+    ciphertext = cipher.encrypt(padded_data)
+    return base64.b64encode(ciphertext).decode()

@@ -3,9 +3,9 @@ import time
 import pygame.mixer
 
 from src.config import save_state, CONFIGS, load_states
-from src.gui.screen.util.button import Button
+from src.gui.screen.overlay import Button
 from src.gui.screen.screen import Screen
-from src.gui.screen.util.slider import Slider
+from src.gui.screen.overlay import Slider
 from src.utility.drawutil import DrawUtil
 from src.utility.fontfactory import FontType, FontFactory
 from src.utility.soundutil import SoundUtil
@@ -38,13 +38,13 @@ class SettingScreen(Screen):
         save_state('OFFSET', off)
 
     def init_screen(self):
-        self._Screen__buttons.clear()
-        self._Screen__sliders.clear()
+        self.overlays.clear()
+        self.overlays.clear()
         load_states()
-        self._Screen__buttons.append(Button("Back", 10, 10, None, None, False, self.__back, size=18))
-        self._Screen__sliders.append(Slider('Volume', 50, 50, 200, 40, self.__listen, value=CONFIGS['VOLUME']))
-        self._Screen__buttons.append(Button('<', 50, 100, None, None, False, self.__offset_low, size=18))
-        self._Screen__buttons.append(Button('>', 220, 100, None, None, False, self.__offset_high, size=18))
+        self.overlays.append(Button("Back", 10, 10, None, None, False, self.__back, size=18))
+        self.overlays.append(Slider('Volume', 50, 50, 200, 40, self.__listen, value=CONFIGS['VOLUME']))
+        self.overlays.append(Button('<', 50, 100, None, None, False, self.__offset_low, size=18))
+        self.overlays.append(Button('>', 220, 100, None, None, False, self.__offset_high, size=18))
 
     def draw_screen(self, mouse_x: int, mouse_y: int, partial_ticks: float):
         super().draw_screen(mouse_x, mouse_y, partial_ticks)

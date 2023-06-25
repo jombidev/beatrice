@@ -2,7 +2,6 @@ import json
 import os
 from types import SimpleNamespace
 
-from src.gui.screen.util.button import Button
 from src.gui.screen.screen import Screen
 from src.utility.drawutil import DrawUtil
 from src.utility.fontfactory import FontType
@@ -11,20 +10,14 @@ from src.utility.timestamp import get_system_time
 
 
 class MusicSelectScreen(Screen):
-    __finalScroll = 0.0
-    __scrollAnimation = 0.0
-    __musicList = []
-    __selected = None
-    __playing = None
-    __recheck = 0.0
-
-    def __init__(self, parent: Screen):
+    def __init__(self):
         super().__init__()
-        self.parent = parent
-
-    def __back(self):
-        self.game.set_screen(self.parent)
-        SoundUtil().stop()
+        self.__finalScroll = 0.0
+        self.__scrollAnimation = 0.0
+        self.__musicList = []
+        self.__selected = None
+        self.__playing = None
+        self.__recheck = 0.0
 
     def __load_music_list(self):
         self.__musicList.clear()
@@ -52,11 +45,12 @@ class MusicSelectScreen(Screen):
 
     def init_screen(self):
         self.__load_music_list()
-        self._Screen__buttons.clear()
-        self._Screen__buttons.append(Button("Back", 10, 10, None, None, False, self.__back, size=18))
 
     def __max_scroll(self) -> float:
         return max(0.0, len(self.__musicList) * 100 - 720 + 50)
+
+    def get_selection(self):
+        return self.__selected
 
     def draw_screen(self, mouse_x: int, mouse_y: int, partial_ticks: float):
         super().draw_screen(mouse_x, mouse_y, partial_ticks)
@@ -70,22 +64,20 @@ class MusicSelectScreen(Screen):
             if thing < 1500 and self.__playing:
                 SoundUtil().stop(1500)
                 self.__playing = None
-                # self.__playing.setVolume_(thing / 1500)
 
         if self.__selected and get_system_time() - self.__recheck > self.__selected['duration']:
             self.__playing = self.__selected['music']
             SoundUtil().play(self.__playing, self.__selected['highlight'])
             self.__recheck = get_system_time()
 
-        self.__draw_list(80, 30, -self.__finalScroll, mouse_x, mouse_y)
-        self.__draw_selected(720, 50)
+        self.__draw_list(750, 30, -self.__finalScroll, mouse_x, mouse_y)
         self.__finalScroll = max(0.0, min(self.__max_scroll(), self.__finalScroll))
 
     def mouse_clicked(self, mouse_x: int, mouse_y: int, mouse_button: int):
         super().mouse_clicked(mouse_x, mouse_y, mouse_button)
-        x = 80
+        x = 750
         y = 30 - self.__finalScroll
-        width = 600
+        width = 500
         height = 100
         for i in range(len(self.__musicList)):
             if DrawUtil().is_hovered(mouse_x, mouse_y, x, y + i * height, width, height):
@@ -99,16 +91,13 @@ class MusicSelectScreen(Screen):
                     self.__playing = self.__selected['music']
                     self.__recheck = get_system_time()
                     SoundUtil().play(self.__playing, self.__selected['highlight'])
-        if self.__selected and DrawUtil().is_hovered(mouse_x, mouse_y, 720, 50, 450, 600):
-            self.__click_selected(720, 50, mouse_x - 720, mouse_y - 50)
 
     def mouse_scrolled(self, mouse_x: int, mouse_y: int, scroll_x: int, scroll_y: int):
         self.__scrollAnimation -= scroll_y * 10
 
     def __draw_list(self, x: float, y: float, scroll: float, mouse_x: int, mouse_y: int):
-        original_y = y
         y += scroll
-        width = 600
+        width = 500
         height = 100
         DrawUtil().draw_box(x, y, width, height * len(self.__musicList), 0xff212121)
         for i in range(len(self.__musicList)):
@@ -130,12 +119,3 @@ class MusicSelectScreen(Screen):
             DrawUtil().draw_centered_string(f'BPM: {self.__selected["bpm"]}', x + width / 2, y + 265 + 15, 0xffffffff, font=FontType.NANUM)
             DrawUtil().draw_box(x + 5, y + 300, 100, 25, 0xff646464)
             DrawUtil().draw_string("metronome", x + 10, y + 305, 0xffffffff)
-
-    def __click_selected(self, x: int, y: int, mouse_x: int, mouse_y: int):
-        # width = 450
-        # height = 600
-        if DrawUtil().is_hovered(mouse_x, mouse_y, 5, 300, 100, 25):
-            SoundUtil().stop()
-            self.game.start(self.__selected['id'])
-            self.game.clear_screen()
-            # self.game.set_screen(GameScreen(self.__selected, MP3(self.__selected['music']).info.length))

@@ -9,6 +9,6 @@ from Crypto.Util.Padding import unpad
 def decrypt(msg: str) -> str:
     key = PBKDF2(SECRET_KEY, SALT, dkLen=32, count=100000)
     cipher = AES.new(key, AES.MODE_CBC, iv=IV)
-    text = unpad(cipher.decrypt(base64.b64decode(msg)), AES.block_size).decode()
-
+    thingy = cipher.decrypt(base64.b64decode(msg))
+    text = unpad(thingy, AES.block_size).decode()
     return text
