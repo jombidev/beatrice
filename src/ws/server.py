@@ -13,9 +13,13 @@ class Server:
         self.started = False
 
     def shutdown(self):
-        try:
-            for ws in self.players.keys():
+        for ws in [*self.players.keys()]:
+            try:
                 ws.close()
+            except Exception as e:
+                print(str(e))
+        self.players.clear()
+        try:
             self.server.shutdown()
             self.running = False
         except Exception as e:
