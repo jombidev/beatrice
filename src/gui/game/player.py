@@ -1,6 +1,7 @@
 import threading
 
 import pygame
+from mutagen.mp3 import MP3
 
 from .base import BasedInGame
 from src.ws.client import Client
@@ -23,8 +24,11 @@ class PlayerGame(BasedInGame):
         self.btn = [
             Button("back", 5, 5, None, None, False, self._back)
         ]
+        self.okays = 0
+        self.misses = 0
         self.parent = parent
         self.song = None
+        self.muslen = 100000000
         self.delay = None
         self._played = False
         threading.Thread(target=self.ws.initialize).start()
@@ -46,7 +50,15 @@ class PlayerGame(BasedInGame):
         else:
             if not self._played and get_system_time() - self.delay > 0:
                 self._played = True
+                self.muslen = MP3(f'resources/map/{self.song}/{self.song}.mp3').info.length * 1000
                 SoundUtil().play(f'resources/map/{self.song}/{self.song}.mp3')
+
+            if get_system_time() - self.delay > self.muslen:
+                self.ws.send({
+                    'type': 'finished',
+                    'okay': self.okays,
+                    'miss': self.misses
+                })
             offset = get_system_time() - self.delay
             center_x = 1280 / 2
             note_width = 120
@@ -56,23 +68,29 @@ class PlayerGame(BasedInGame):
             for item in self.notes:
                 time, pos = item
                 if time + 500 < offset:
+                    self.misses += 1
                     rem.append(item)
                 pos -= 2
                 DrawUtil().draw_box(center_x + note_width * pos, 680 - (time - offset), note_width, 20, 0xffffffff)
             for d in rem:
                 self.notes.remove(d)
 
-        DrawUtil().draw_string(f"started: {self.ws.started}", 120, 5, 0xffffffff)
+        DrawUtil().draw_string(f"started: {self.ws.started}, okay|miss: {self.okays}|{self.misses}", 120, 5, 0xffffffff)
 
     def key_typed(self, key: int, char: str):
         o = [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k]
         offset = get_system_time() - self.delay
+        v = {pygame.K_d: False, pygame.K_f: False, pygame.K_j: False, pygame.K_k: False}
+        dels = []
         for item in self.notes:
             time, pos = item
-            if key == o[pos] and -100 < time - offset < 100:
-                print('okay')
-
-
+            if key == o[pos]:
+                if -100 < time - offset < 100 and not v[key]:
+                    v[key] = True
+                    dels.append(item)
+                    self.okays += 1
+        for de in dels:
+            self.notes.remove(de)
 
     def mouse_clicked(self, mouse_x: int, mouse_y: int, mouse_button: int):
         for btn in self.btn:

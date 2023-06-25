@@ -6,6 +6,7 @@ import time
 import websockets
 from websockets.sync.client import connect
 
+from src.gui.screen.impl.result import ResultScreen
 from src.static.constants import Constants
 from src.utility.aes import *
 
@@ -35,6 +36,11 @@ class Client:
             Constants().get('game').instance.btn.clear()
         if msg['type'] == 'note':
             Constants().get('game').instance.notes.append((msg['time'], msg['notepos']))
+
+        if msg['type'] == 'result':
+            self.shutdown()
+            Constants().get('game').finish()
+            Constants().get('game').set_screen(ResultScreen(msg['players']))
 
 
 
@@ -75,7 +81,10 @@ class Client:
                 break
 
     def send(self, jn):
-        self.client.send(encrypt(json.dumps(jn)))
+        try:
+            self.client.send(encrypt(json.dumps(jn)))
+        except:
+            return
 
     def initialize(self):
         try:

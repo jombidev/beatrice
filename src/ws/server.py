@@ -8,6 +8,7 @@ from src.utility.aes import *
 class Server:
     def __init__(self):
         self.players = {}
+        self.finished = {}
         self.running = True
         self.started = False
 
@@ -50,6 +51,8 @@ class Server:
                     if not self.players[ws]:
                         self.players[ws] = m['name']
                         self.broadcast(self.build())
+                if m['type'] == 'finished':
+                    self.finished[ws] = (m['okay'], m['miss'])
 
         except Exception as e:
             print('server got error:', str(e))
