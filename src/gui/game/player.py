@@ -6,6 +6,7 @@ from mutagen.mp3 import MP3
 from .base import BasedInGame
 from src.ws.client import Client
 from ..screen.overlay import Button
+from ...config import CONFIGS
 from ...static.constants import Constants
 from ...utility.drawutil import DrawUtil
 from ...utility.soundutil import SoundUtil
@@ -71,7 +72,7 @@ class PlayerGame(BasedInGame):
                     self.misses += 1
                     rem.append(item)
                 pos -= 2
-                DrawUtil().draw_box(center_x + note_width * pos, 680 - (time - offset), note_width, 20, 0xffffffff)
+                DrawUtil().draw_box(center_x + note_width * pos, 680 - (time - offset) + CONFIGS['OFFSET'], note_width, 20, 0xffffffff)
             for d in rem:
                 self.notes.remove(d)
 
