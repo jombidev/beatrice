@@ -1,4 +1,5 @@
 import json
+import socket
 
 from websockets.sync.server import serve
 
@@ -11,6 +12,18 @@ class Server:
         self.finished = {}
         self.running = True
         self.started = False
+
+    def _get_ip(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.settimeout(0)
+        try:
+            s.connect(("8.8.8.8", 80))
+            IP = s.getsockname()[0]
+        except Exception:
+            IP = '127.0.0.1'
+        finally:
+            s.close()
+        return IP
 
     def shutdown(self):
         for ws in [*self.players.keys()]:
@@ -39,6 +52,7 @@ class Server:
         }
 
     def _handle_ws(self, ws):
+        print('tried connect')
         self.players[ws] = None
         try:
             for msg in ws:
@@ -61,11 +75,14 @@ class Server:
         except Exception as e:
             print('server got error:', str(e))
         finally:
-            del self.players[ws]
-            self.broadcast(self.build())
+            try:
+                del self.players[ws]
+                self.broadcast(self.build())
+            except:
+                return
 
     def initialize(self):
-        with serve(self._handle_ws, host='localhost', port=65432) as ws:
+        with serve(self._handle_ws, host=self._get_ip(), port=65432) as ws:
             self.server = ws
             print('server handled')
             while self.running:
