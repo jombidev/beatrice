@@ -70,7 +70,7 @@ class Client:
         while self.running:
             try:
                 time.sleep(15)
-                self.send({'type': 'ping'})
+                self.send_queue.append({'type': 'ping'})
             except websockets.ConnectionClosed:
                 print('connection closed - ping checker')
                 self.running = False

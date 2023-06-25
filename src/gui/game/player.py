@@ -54,7 +54,7 @@ class PlayerGame(BasedInGame):
                 SoundUtil().play(f'resources/map/{self.song}/{self.song}.mp3')
 
             if get_system_time() - self.delay > self.muslen:
-                self.ws.send({
+                self.ws.send_queue.append({
                     'type': 'finished',
                     'okay': self.okays,
                     'miss': self.misses
@@ -75,7 +75,7 @@ class PlayerGame(BasedInGame):
             for d in rem:
                 self.notes.remove(d)
 
-        DrawUtil().draw_string(f"started: {self.ws.started}, okay|miss: {self.okays}|{self.misses}", 120, 5, 0xffffffff)
+        DrawUtil().draw_string(f"started: {self.ws.started}, okay: {self.okays}, misses: {self.misses}", 120, 5, 0xffffffff)
 
     def key_typed(self, key: int, char: str):
         o = [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k]

@@ -115,7 +115,7 @@ class HostGame(BasedInGame):
         o = [pygame.K_d, pygame.K_f, pygame.K_j, pygame.K_k]
         if key in o and not self.stop:
             self.tmpnote.append((get_system_time() - self.timestamp, o.index(key)))
-            self.ws.broadcast({
+            self.ws.broadcast_queue.append({
                 'type': 'note',
                 'time': get_system_time() - self.timestamp,
                 'notepos': o.index(key)

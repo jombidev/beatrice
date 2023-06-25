@@ -1,5 +1,6 @@
 import json
 import socket
+import threading
 
 from websockets.sync.server import serve
 
@@ -12,6 +13,7 @@ class Server:
         self.finished = {}
         self.running = True
         self.started = False
+        self.broadcast_queue = []
 
     def _get_ip(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -51,6 +53,14 @@ class Server:
             'players': [*self.players.values()]
         }
 
+    def auto_broadcast(self):
+        while self.running:
+            try:
+                if self.broadcast_queue:
+                    self.broadcast(self.broadcast_queue.pop(0))
+            except Exception as e:
+                print(e)  # idk
+
     def _handle_ws(self, ws):
         print('tried connect')
         self.players[ws] = None
@@ -85,6 +95,7 @@ class Server:
         with serve(self._handle_ws, host=self._get_ip(), port=65432) as ws:
             self.server = ws
             print('server handled')
+            threading.Thread(target=self.auto_broadcast).start()
             while self.running:
                 self.server.serve_forever()
 
