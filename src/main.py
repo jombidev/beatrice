@@ -11,7 +11,7 @@ from src.utility.timestamp import *
 import nest_asyncio
 nest_asyncio.apply()
 
-os.environ["MTL_HUD_ENABLED"] = "1"
+# os.environ["MTL_HUD_ENABLED"] = "1"
 
 prevTime = 0
 
